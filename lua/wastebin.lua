@@ -6,6 +6,22 @@ local defaults = {
   open_cmd = "xdg-open",
 }
 
+local ft_to_ext = {
+  cpp = "cpp",
+  c = "c",
+  css = "css",
+  go = "go",
+  html = "html",
+  java = "java",
+  javascript = "js",
+  lua = "lua",
+  markdown = "md",
+  python = "py",
+  rust = "rs",
+  xml = "xml",
+  yaml = "yaml",
+}
+
 local function get_visual_selection()
   local range_start = vim.fn.getpos("'<")
   local range_end = vim.fn.getpos("'>")
@@ -50,7 +66,9 @@ M._internal_paste_cmd = function(params)
       end
     end,
   })
-  vim.api.nvim_chan_send(job, vim.fn.json_encode({ text = text }))
+
+  local obj = vim.fn.json_encode({ text = text, extension = ft_to_ext[vim.bo.filetype] })
+  vim.api.nvim_chan_send(job, obj)
   vim.fn.chanclose(job, "stdin")
 end
 
