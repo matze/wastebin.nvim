@@ -32,6 +32,7 @@ The plugin comes with the following defaults:
 
 ```lua
 {
+  -- URL of wastebin service to POST pastes to
   url = vim.env.WASTEBIN_URL,
   -- Shell command to POST the content
   post_cmd = "curl -s -H 'Content-Type: application/json' --data-binary @- ",

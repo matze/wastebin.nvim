@@ -41,8 +41,19 @@ local function get_buffer_text()
   return table.concat(content, "\n")
 end
 
+local function strip_trailing_slash(s)
+  return string.gsub(s, "(.)/*$", "%1")
+end
+
 M.setup = function(opts)
   M.config = vim.tbl_deep_extend("force", defaults, opts or {})
+
+  if M.config.url == nil then
+    vim.notify("No wastebin URL set", vim.log.levels.WARN)
+    return
+  end
+
+  M.config.url = strip_trailing_slash(M.config.url)
 
   vim.cmd([[
     command! -range -nargs=? WastePaste :lua require("wastebin")._internal_paste_cmd({ args = <q-args>, range = <range> })
