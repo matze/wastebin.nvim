@@ -12,9 +12,7 @@ Use your preferred package manage, for example
 return {
   {
     "matze/wastebin.nvim",
-    init = function()
-      require("wastebin").setup()
-    end,
+    config = true,
   }
 }
 ```
