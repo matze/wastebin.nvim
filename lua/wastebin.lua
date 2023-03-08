@@ -45,7 +45,7 @@ M.setup = function(opts)
   M.config = vim.tbl_deep_extend("force", defaults, opts or {})
 
   vim.cmd([[
-    command! -buffer -range -nargs=? WastePaste :lua require("wastebin")._internal_paste_cmd({ args = <q-args>, range = <range> })
+    command! -range -nargs=? WastePaste :lua require("wastebin")._internal_paste_cmd({ args = <q-args>, range = <range> })
   ]])
 end
 
