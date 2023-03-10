@@ -37,7 +37,7 @@ The plugin comes with the following defaults:
   -- Shell command to POST the content
   post_cmd = "curl -s -H 'Content-Type: application/json' --data-binary @- ",
   -- Shell command to open URLs
-  open_cmd = "xdg-open",
+  open_cmd = "open",
 }
 ```
 

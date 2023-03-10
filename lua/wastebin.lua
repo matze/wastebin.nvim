@@ -3,7 +3,7 @@ local M = {}
 local defaults = {
   url = vim.env.WASTEBIN_URL,
   post_cmd = "curl -s -H 'Content-Type: application/json' --data-binary @- ",
-  open_cmd = "xdg-open",
+  open_cmd = "open",
 }
 
 local ft_to_ext = {
