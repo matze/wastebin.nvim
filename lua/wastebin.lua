@@ -86,39 +86,39 @@ M.setup = function(opts)
 end
 
 local function send(params)
-	local text = ""
+  local text = ""
+  if params.range > 0 then
+    text = get_visual_selection()
+  else
+    text = get_buffer_text()
+  end
 
-	if params.range > 0 then
-		text = get_visual_selection()
-	else
-		text = get_buffer_text()
-	end
+  local job = vim.fn.jobstart(M.config.post_cmd .. M.config.url, {
+    on_stdout = function(_, data)
+      if #data[1] > 0 then
+        local response = vim.fn.json_decode(data[1])
+        vim.fn.jobstart(M.config.open_cmd .. " " .. M.config.url .. response.path)
+      end
+    end,
+  })
 
-	local job = vim.fn.jobstart(M.config.post_cmd .. M.config.url, {
-		on_stdout = function(_, data)
-			if #data[1] > 0 then
-				response = vim.fn.json_decode(data[1])
-				vim.fn.jobstart(M.config.open_cmd .. " " .. M.config.url .. response.path)
-			end
-		end,
-	})
-
-	local obj = vim.fn.json_encode({ text = text, extension = ft_to_ext[vim.bo.filetype] })
-	vim.api.nvim_chan_send(job, obj)
-	vim.fn.chanclose(job, "stdin")
+  local obj = vim.fn.json_encode({ text = text, extension = ft_to_ext[vim.bo.filetype] })
+  vim.api.nvim_chan_send(job, obj)
+  vim.fn.chanclose(job, "stdin")
 end
 
 M._internal_paste_cmd = function(params)
-	if not M.config.ask then
-		return send(params)
-	end
-	vim.ui.select({ "yes", "no" }, {
-		prompt = "Really paste to " .. M.config.url .. "?",
-	}, function(choice)
-		if choice == "yes" then
-			send(params)
-		end
-	end)
+  if not M.config.ask then
+    return send(params)
+  end
+
+  vim.ui.select({ "yes", "no" }, {
+    prompt = "Really paste to " .. M.config.url .. "?",
+  }, function(choice)
+    if choice == "yes" then
+      send(params)
+    end
+  end)
 end
 
 return M
