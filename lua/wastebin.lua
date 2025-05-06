@@ -4,6 +4,7 @@ local defaults = {
   url = vim.env.WASTEBIN_URL,
   post_cmd = "curl -s -H 'Content-Type: application/json' --data-binary @- ",
   open_cmd = "open",
+  ask = true,
 }
 
 local ft_to_ext = {
@@ -84,34 +85,40 @@ M.setup = function(opts)
   ]])
 end
 
+local function send(params)
+	local text = ""
+
+	if params.range > 0 then
+		text = get_visual_selection()
+	else
+		text = get_buffer_text()
+	end
+
+	local job = vim.fn.jobstart(M.config.post_cmd .. M.config.url, {
+		on_stdout = function(_, data)
+			if #data[1] > 0 then
+				response = vim.fn.json_decode(data[1])
+				vim.fn.jobstart(M.config.open_cmd .. " " .. M.config.url .. response.path)
+			end
+		end,
+	})
+
+	local obj = vim.fn.json_encode({ text = text, extension = ft_to_ext[vim.bo.filetype] })
+	vim.api.nvim_chan_send(job, obj)
+	vim.fn.chanclose(job, "stdin")
+end
+
 M._internal_paste_cmd = function(params)
-  vim.ui.select({ "yes", "no" }, {
-    prompt = "Really paste to " .. M.config.url .. "?"
-  },
-  function(choice)
-    if choice == "yes" then
-      local text = ""
-
-      if params.range > 0 then
-        text = get_visual_selection()
-      else
-        text = get_buffer_text()
-      end
-
-      local job = vim.fn.jobstart(M.config.post_cmd .. M.config.url, {
-        on_stdout = function(_, data)
-          if #data[1] > 0 then
-            response = vim.fn.json_decode(data[1])
-            vim.fn.jobstart(M.config.open_cmd .. " " .. M.config.url .. response.path)
-          end
-        end,
-      })
-
-      local obj = vim.fn.json_encode({ text = text, extension = ft_to_ext[vim.bo.filetype] })
-      vim.api.nvim_chan_send(job, obj)
-      vim.fn.chanclose(job, "stdin")
-    end
-  end)
+	if not M.config.ask then
+		return send(params)
+	end
+	vim.ui.select({ "yes", "no" }, {
+		prompt = "Really paste to " .. M.config.url .. "?",
+	}, function(choice)
+		if choice == "yes" then
+			send(params)
+		end
+	end)
 end
 
 return M
