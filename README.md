@@ -38,6 +38,8 @@ The plugin comes with the following defaults:
   post_cmd = "curl -s -H 'Content-Type: application/json' --data-binary @- ",
   -- Shell command to open URLs
   open_cmd = "open",
+  -- Ask for confirmation
+  ask = true,
 }
 ```
 
