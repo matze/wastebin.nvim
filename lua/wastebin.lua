@@ -2,8 +2,8 @@ local M = {}
 
 local defaults = {
   url = vim.env.WASTEBIN_URL,
-  post_cmd = "curl -s -H 'Content-Type: application/json' --data-binary @- ",
-  open_cmd = "open",
+  post_cmd = { "curl", "-s", "-H", "Content-Type: application/json", "--data-binary", "@-" },
+  open_cmd = { "open" },
   ask = true,
 }
 
@@ -71,25 +71,34 @@ local function strip_trailing_slash(s)
 end
 
 local function send(params)
-  local text = ""
-  if params.range > 0 then
-    text = get_visual_selection()
-  else
-    text = get_buffer_text()
-  end
+  local text = params.range > 0 and get_visual_selection() or get_buffer_text()
 
-  local job = vim.fn.jobstart(M.config.post_cmd .. M.config.url, {
-    on_stdout = function(_, data)
-      if #data[1] > 0 then
-        local response = vim.fn.json_decode(data[1])
-        vim.fn.jobstart(M.config.open_cmd .. " " .. M.config.url .. response.path)
-      end
-    end,
+  local body = vim.json.encode({
+    text = text,
+    extension = ft_to_ext[vim.bo.filetype],
   })
 
-  local obj = vim.fn.json_encode({ text = text, extension = ft_to_ext[vim.bo.filetype] })
-  vim.api.nvim_chan_send(job, obj)
-  vim.fn.chanclose(job, "stdin")
+  local post = vim.list_extend(vim.deepcopy(M.config.post_cmd), { M.config.url })
+
+  vim.system(post, { stdin = body, text = true }, function(out)
+    if out.code ~= 0 then
+      vim.schedule(function()
+        vim.notify("wastebin: POST failed: " .. (out.stderr or ""), vim.log.levels.ERROR)
+      end)
+      return
+    end
+
+    local ok, response = pcall(vim.json.decode, out.stdout or "")
+    if not ok or type(response) ~= "table" or type(response.path) ~= "string" then
+      vim.schedule(function()
+        vim.notify("wastebin: unexpected response: " .. (out.stdout or ""), vim.log.levels.ERROR)
+      end)
+      return
+    end
+
+    local open = vim.list_extend(vim.deepcopy(M.config.open_cmd), { M.config.url .. response.path })
+    vim.system(open, { detach = true })
+  end)
 end
 
 local function paste(params)

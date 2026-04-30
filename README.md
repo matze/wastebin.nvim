@@ -34,10 +34,10 @@ The plugin comes with the following defaults:
 {
   -- URL of wastebin service to POST pastes to
   url = vim.env.WASTEBIN_URL,
-  -- Shell command to POST the content
-  post_cmd = "curl -s -H 'Content-Type: application/json' --data-binary @- ",
-  -- Shell command to open URLs
-  open_cmd = "open",
+  -- argv list used to POST the content; the URL is appended automatically
+  post_cmd = { "curl", "-s", "-H", "Content-Type: application/json", "--data-binary", "@-" },
+  -- argv list used to open the resulting URL; the URL is appended automatically
+  open_cmd = { "open" },
   -- Ask for confirmation
   ask = true,
 }
