@@ -1,0 +1,100 @@
+*wastebin.txt*    Paste current buffer or selection to a wastebin instance
+
+==============================================================================
+CONTENTS                                                  *wastebin-contents*
+
+  1. Introduction ........................... |wastebin-introduction|
+  2. Setup .................................. |wastebin-setup|
+  3. Configuration .......................... |wastebin-configuration|
+  4. Commands ............................... |wastebin-commands|
+  5. Health ................................. |wastebin-health|
+
+==============================================================================
+1. INTRODUCTION                                       *wastebin-introduction*
+
+A small plugin for posting the current buffer or visual selection to a
+running wastebin (https://github.com/matze/wastebin) instance, then
+opening the resulting URL in the system's default opener.
+
+==============================================================================
+2. SETUP                                                     *wastebin-setup*
+
+Calling |wastebin.setup()| is optional. If `WASTEBIN_URL` is set in the
+environment the plugin works out of the box. To override defaults: >lua
+
+    require("wastebin").setup({
+      url = "https://paste.example.com",
+    })
+<
+                                                          *wastebin.setup()*
+require("wastebin").setup({opts})
+    Merge {opts} into the default configuration. See
+    |wastebin-configuration| for the supported keys.
+
+                                                          *wastebin.paste()*
+require("wastebin").paste({params})
+    Send the current buffer or visual selection to the configured URL.
+    {params} is a table with:
+        range  (integer) Non-zero when invoked with a range, in which
+                         case the visual selection is sent instead of
+                         the whole buffer.
+
+    The |:WastePaste| command is the normal entry point; this function
+    is exposed for users who want to bind it to a key directly.
+
+==============================================================================
+3. CONFIGURATION                                     *wastebin-configuration*
+
+Defaults: >lua
+
+    {
+      url = vim.env.WASTEBIN_URL,
+      post_cmd = {
+        "curl", "-s",
+        "-H", "Content-Type: application/json",
+        "--data-binary", "@-",
+      },
+      open_cmd = { "open" },
+      ask = true,
+    }
+<
+                                                            *wastebin.url*
+url ~
+    Base URL of the wastebin instance. The trailing slash is stripped
+    automatically. If unset, |:WastePaste| reports an error.
+
+                                                       *wastebin.post_cmd*
+post_cmd ~
+    Argv list used to POST the paste body on stdin. The configured
+    |wastebin.url| is appended as the last argument. Pass an argv list,
+    not a shell string — values are not interpreted by the shell.
+
+                                                       *wastebin.open_cmd*
+open_cmd ~
+    Argv list used to open the returned URL. The full paste URL is
+    appended as the last argument.
+
+                                                            *wastebin.ask*
+ask ~
+    When `true`, prompt for confirmation via |vim.ui.select()| before
+    sending. Set to `false` to skip the prompt.
+
+==============================================================================
+4. COMMANDS                                               *wastebin-commands*
+
+                                                              *:WastePaste*
+:WastePaste
+    Send the current buffer to the configured wastebin instance.
+
+:'<,'>WastePaste
+    Send the current visual selection. Charwise, linewise, and
+    blockwise selections are all supported.
+
+==============================================================================
+5. HEALTH                                                   *wastebin-health*
+
+Run `:checkhealth wastebin` to verify that a URL is configured and that
+the |wastebin.post_cmd| and |wastebin.open_cmd| binaries are available
+on `$PATH`.
+
+vim:tw=78:ts=8:ft=help:norl:
