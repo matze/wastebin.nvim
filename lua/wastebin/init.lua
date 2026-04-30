@@ -47,6 +47,19 @@ local ft_to_ext = {
   zig = "zig",
 }
 
+local function strip_trailing_slash(s)
+  return (s:gsub("/+$", ""))
+end
+
+local function normalize(config)
+  if config.url then
+    config.url = strip_trailing_slash(config.url)
+  end
+  return config
+end
+
+M.config = normalize(vim.deepcopy(defaults))
+
 local function get_visual_selection()
   local lines = vim.fn.getregion(vim.fn.getpos("'<"), vim.fn.getpos("'>"), { type = vim.fn.visualmode() })
   return table.concat(lines, "\n")
@@ -55,10 +68,6 @@ end
 local function get_buffer_text()
   local content = vim.api.nvim_buf_get_lines(0, 0, vim.api.nvim_buf_line_count(0), false)
   return table.concat(content, "\n")
-end
-
-local function strip_trailing_slash(s)
-  return (s:gsub("/+$", ""))
 end
 
 local function get_extension()
@@ -104,7 +113,12 @@ local function send(params)
   end)
 end
 
-local function paste(params)
+function M.paste(params)
+  if M.config.url == nil then
+    vim.notify("wastebin: no URL configured (set WASTEBIN_URL or pass `url` to setup())", vim.log.levels.ERROR)
+    return
+  end
+
   if not M.config.ask then
     return send(params)
   end
@@ -118,22 +132,8 @@ local function paste(params)
   end)
 end
 
-M.setup = function(opts)
-  M.config = vim.tbl_deep_extend("force", defaults, opts or {})
-
-  if M.config.url == nil then
-    vim.notify("No wastebin URL set", vim.log.levels.WARN)
-    return
-  end
-
-  M.config.url = strip_trailing_slash(M.config.url)
-
-  vim.api.nvim_create_user_command("WastePaste", function(opts)
-    paste({ range = opts.range })
-  end, {
-    range = true,
-    desc = "Paste buffer or visual selection to wastebin",
-  })
+function M.setup(opts)
+  M.config = normalize(vim.tbl_deep_extend("force", defaults, opts or {}))
 end
 
 return M
