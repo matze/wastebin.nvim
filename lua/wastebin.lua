@@ -70,21 +70,6 @@ local function strip_trailing_slash(s)
   return string.gsub(s, "(.)/*$", "%1")
 end
 
-M.setup = function(opts)
-  M.config = vim.tbl_deep_extend("force", defaults, opts or {})
-
-  if M.config.url == nil then
-    vim.notify("No wastebin URL set", vim.log.levels.WARN)
-    return
-  end
-
-  M.config.url = strip_trailing_slash(M.config.url)
-
-  vim.cmd([[
-    command! -range -nargs=? WastePaste :lua require("wastebin")._internal_paste_cmd({ args = <q-args>, range = <range> })
-  ]])
-end
-
 local function send(params)
   local text = ""
   if params.range > 0 then
@@ -107,7 +92,7 @@ local function send(params)
   vim.fn.chanclose(job, "stdin")
 end
 
-M._internal_paste_cmd = function(params)
+local function paste(params)
   if not M.config.ask then
     return send(params)
   end
@@ -119,6 +104,24 @@ M._internal_paste_cmd = function(params)
       send(params)
     end
   end)
+end
+
+M.setup = function(opts)
+  M.config = vim.tbl_deep_extend("force", defaults, opts or {})
+
+  if M.config.url == nil then
+    vim.notify("No wastebin URL set", vim.log.levels.WARN)
+    return
+  end
+
+  M.config.url = strip_trailing_slash(M.config.url)
+
+  vim.api.nvim_create_user_command("WastePaste", function(opts)
+    paste({ range = opts.range })
+  end, {
+    range = true,
+    desc = "Paste buffer or visual selection to wastebin",
+  })
 end
 
 return M
