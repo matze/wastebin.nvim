@@ -58,7 +58,19 @@ local function get_buffer_text()
 end
 
 local function strip_trailing_slash(s)
-  return string.gsub(s, "(.)/*$", "%1")
+  return (s:gsub("/+$", ""))
+end
+
+local function get_extension()
+  local ext = ft_to_ext[vim.bo.filetype]
+  if ext then
+    return ext
+  end
+  local file_ext = vim.fn.expand("%:e")
+  if file_ext ~= "" then
+    return file_ext
+  end
+  return nil
 end
 
 local function send(params)
@@ -66,7 +78,7 @@ local function send(params)
 
   local body = vim.json.encode({
     text = text,
-    extension = ft_to_ext[vim.bo.filetype],
+    extension = get_extension(),
   })
 
   local post = vim.list_extend(vim.deepcopy(M.config.post_cmd), { M.config.url })
