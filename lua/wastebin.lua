@@ -48,16 +48,7 @@ local ft_to_ext = {
 }
 
 local function get_visual_selection()
-  local range_start = vim.fn.getpos("'<")
-  local range_end = vim.fn.getpos("'>")
-  local num_lines = math.abs(range_end[2] - range_start[2]) + 1
-  local lines = vim.api.nvim_buf_get_lines(0, range_start[2] - 1, range_end[2], false)
-  lines[1] = string.sub(lines[1], range_start[3], -1)
-  if num_lines == 1 then
-    lines[num_lines] = string.sub(lines[num_lines], 1, range_end[3] - range_start[3] + 1)
-  else
-    lines[num_lines] = string.sub(lines[num_lines], 1, range_end[3])
-  end
+  local lines = vim.fn.getregion(vim.fn.getpos("'<"), vim.fn.getpos("'>"), { type = vim.fn.visualmode() })
   return table.concat(lines, "\n")
 end
 
